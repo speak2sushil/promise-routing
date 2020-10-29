@@ -9,6 +9,7 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
 import org.neo4j.ogm.annotation.typeconversion.EnumString;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 @NodeEntity
@@ -30,6 +31,8 @@ public class Node {
     private NodeType type;
     private boolean enabled ;
     private Integer ranking ;
+    @Relationship(type = "HAS-SERVICE", direction = Relationship.OUTGOING)
+    List<Service> services;
    /* @JsonIgnoreProperties
     @Relationship(type="LEG",direction = Relationship.UNDIRECTED)
     private Set<Leg> legs;*/
