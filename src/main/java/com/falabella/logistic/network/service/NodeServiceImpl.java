@@ -64,6 +64,8 @@ public class NodeServiceImpl implements NodeService{
                 .enabled(serviceDto.isEnabled())
                 .offeredDaysAhead(serviceDto.getOfferedDaysAhead())
                 .serviceCategory(serviceDto.getServiceCategory())
+                .operation(serviceDto.getServiceOperation())
+                .serviceRestrictions(serviceDto.getServiceRestrictions())
                 .build();
         return serviceRepository.save(service);
     }

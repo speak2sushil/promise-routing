@@ -4,11 +4,10 @@ import lombok.Builder;
 import lombok.Value;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
-import org.neo4j.ogm.annotation.Labels;
 import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.typeconversion.Convert;
 
 import java.util.List;
-import java.util.Set;
 
 @Value
 @Builder(toBuilder = true)
@@ -22,23 +21,8 @@ public class Service {
     ServiceCategory serviceCategory;
     boolean enabled;
     int offeredDaysAhead;
-    Restrictions restrictions;
+    @Convert(value = ServiceRestrictionsConverter.class)
+    ServiceRestrictions serviceRestrictions;
+    @Convert(value = ServiceOperationConverter.class)
     List<ServiceOperation> operation;
-
-    public static class Restrictions {
-        List<String> productTypes;
-        double maxWeight;
-        String weightUOM;
-        double maxVolume;
-        String volumeUOM;
-    }
-
-
-    public static class ServiceOperation {
-        List<String> dayOfWeek;
-        boolean enabled;
-        String deadLine;
-        //TODO Resources mapping
-    }
-
 }

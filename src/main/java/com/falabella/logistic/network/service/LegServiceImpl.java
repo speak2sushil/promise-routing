@@ -47,9 +47,9 @@ public class LegServiceImpl implements  LegService{
         modelMapper.map(legDTO.getTargetNode(),targetNode);
         modelMapper.map(legDTO.getOperator(),legOperator);
         modelMapper.map(legDTO,leg);
-        List<Operation> operationList = legDTO.getOperationList()
+        List<LegOperation> legOperationList = legDTO.getOperationList()
                 .stream()
-                .map(operation -> modelMapper.map(operation, Operation.class))
+                .map(operation -> modelMapper.map(operation, LegOperation.class))
                 .collect(Collectors.toList());
         originNode.setLabels(List.of(legDTO.getOriginNode().getType()));
         targetNode.setLabels(List.of(legDTO.getTargetNode().getType()));
@@ -60,7 +60,7 @@ public class LegServiceImpl implements  LegService{
         leg.setOriginNode(originNode);
         leg.setTargetNode(targetNode);
         leg.setOperator(legOperator);
-        leg.setOperationList(operationList);
+        leg.setLegOperationList(legOperationList);
         leg=legRepository.save(leg);
         log.info("LegServiceImpl::>> createLegAndNode end");
         return leg;

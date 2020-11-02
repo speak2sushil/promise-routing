@@ -11,7 +11,7 @@ import java.util.Set;
 
 //@NodeEntity
 @Data
-public class Operation {
+public class LegOperation {
 
 //    @Id
 //    @GeneratedValue
@@ -22,7 +22,5 @@ public class Operation {
     private String arrivalETD;
     private Boolean  collect;
     private Boolean  enabled;
-    @Relationship(type="HAS_RESOURCE",direction = Relationship.OUTGOING)
-    private Set<Resource> resources;
-
+    private Set<String> resources;
 }

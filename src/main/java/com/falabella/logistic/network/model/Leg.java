@@ -35,14 +35,9 @@ public class Leg {
     private Integer ranking;
     private Integer preprocessingInMins;
     private Integer offeredDaysAhead;
-    //restrictions
-    private Double maxWeightInKg;
-    private Double maxVolumeInDm3;
-    private Double maxDimensionInCm;
-    @Convert(NoPrefixPropertiesConverter.class)
-    private Map<String, List<String>> productTypes; // INLCUDED, EXCLUDED
-    //@Relationship(type="OPERATION",direction = Relationship.OUTGOING
-    @Convert(OperationConverter.class)
-    private List<Operation> operationList;
-
+    private List<String> excludedProductTypes;
+    @Convert(value = LegRestrictionsConverter.class)
+    private LegRestrictions legRestrictions;
+    @Convert(LegOperationConverter.class)
+    private List<LegOperation> legOperationList;
 }
