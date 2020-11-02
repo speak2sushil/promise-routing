@@ -2,6 +2,7 @@ package com.falabella.logistic.network.repository;
 
 import com.falabella.logistic.network.model.ItineraryResponse;
 import com.falabella.logistic.network.model.Node;
+import com.falabella.logistic.network.model.Service;
 import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
 import org.neo4j.ogm.model.Result;
@@ -22,6 +23,9 @@ public interface NodeRepository extends Neo4jRepository<Node, Long> {
 
     @Query("match (n:Node) where id(n)=$0 return n")
     Optional<Node> findNodeById(Long id);
+
+    @Query("match (s:Service)<-[:`HAS-SERVICE`]-(n:Node) where id(n)=$0 return s")
+    List<Service> findServicesByNodeId(Long id);
 
     @Query("match p=(n:Node)-[*]->(m:ZONE) \n" +
             "where\n" +
