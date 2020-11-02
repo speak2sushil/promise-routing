@@ -25,6 +25,7 @@ public class LegDTO {
     private Integer ranking ;
     private Integer preprocessingInMins ;
     private Integer offeredDaysAhead ;
+    private Integer cost;
     //restrictions
     private Double maxWeightInKg ;
     private Double maxVolumeInDm3 ;

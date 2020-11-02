@@ -35,6 +35,7 @@ public class Leg {
     private Integer ranking;
     private Integer preprocessingInMins;
     private Integer offeredDaysAhead;
+    private Integer cost;
     private List<String> excludedProductTypes;
     @Convert(value = LegRestrictionsConverter.class)
     private LegRestrictions legRestrictions;
