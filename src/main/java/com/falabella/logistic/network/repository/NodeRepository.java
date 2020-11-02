@@ -53,4 +53,15 @@ public interface NodeRepository extends Neo4jRepository<Node, Long> {
             "return nodes(path) AS nodes, relationships(path) as relationships\n" +
             "ORDER BY weight ")
     Result findAllFacilitiesForZonesBasedOnService(@Param("serviceList") List<String> serviceList ,@Param("zoneIds") List<Long> zoneIds );
+
+    @Query("match p=(s:Service)<-[:`HAS-SERVICE`]-(n:Node)-[*..10]->(z:Node) where  z.name in [$zone]\n" +
+            "with collect(distinct n) as sourceNodes,collect(distinct z) as destinationNodes\n" +
+            "with sourceNodes+destinationNodes as allNodes\n" +
+            "match (start:Node) , (end:Node:ZONE)\n" +
+            "CALL apoc.algo.dijkstra(start, end, 'LEG', 'cost') YIELD path, weight\n" +
+            "where all(node in nodes(path) where node in allNodes)\n" +
+            "and  start.type IN ['FULFILMENT_CENTER','STORE']\n" +
+            "return nodes(path) AS nodes, relationships(path) as relationships\n" +
+            "ORDER BY weight")
+    Result findAllPathsForAZone(String zone);
 }

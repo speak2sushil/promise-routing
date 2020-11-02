@@ -1,6 +1,8 @@
 package com.falabella.logistic.network.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Value;
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
@@ -9,7 +11,7 @@ import org.neo4j.ogm.annotation.typeconversion.Convert;
 
 import java.util.List;
 
-@Value
+@Data
 @Builder(toBuilder = true)
 @NodeEntity
 public class Service {

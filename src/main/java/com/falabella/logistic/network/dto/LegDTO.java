@@ -2,6 +2,8 @@ package com.falabella.logistic.network.dto;
 
 
 
+import com.falabella.logistic.network.model.LegOperation;
+import com.falabella.logistic.network.model.LegRestrictions;
 import com.falabella.logistic.network.model.ServiceCategory;
 import lombok.Data;
 
@@ -26,10 +28,7 @@ public class LegDTO {
     private Integer preprocessingInMins ;
     private Integer offeredDaysAhead ;
     private Integer cost;
-    //restrictions
-    private Double maxWeightInKg ;
-    private Double maxVolumeInDm3 ;
-    private Double maxDimensionInCm ;
-    private List<OperationDTO> operationList;
-    private Map<String, List<String>> productTypes;
+    private LegRestrictions legRestrictions;
+    private List<LegOperation> operationList;
+    private List<String> excludedProductTypes;
 }

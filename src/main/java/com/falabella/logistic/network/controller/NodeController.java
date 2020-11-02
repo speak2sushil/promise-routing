@@ -32,4 +32,5 @@ public class NodeController {
         log.info("NodeController  {} createNodes end ");
         return new ResponseEntity<List<Node>>(savedNodeList, HttpStatus.CREATED);
     }
+
 }

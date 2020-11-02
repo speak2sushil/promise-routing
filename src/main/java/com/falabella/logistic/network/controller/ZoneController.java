@@ -1,6 +1,7 @@
 package com.falabella.logistic.network.controller;
 
 import com.falabella.logistic.network.dto.ItineraryDTO;
+import com.falabella.logistic.network.model.ItineraryResponse;
 import com.falabella.logistic.network.service.ZoneService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,5 +32,13 @@ public class ZoneController {
         return new ResponseEntity<List<ItineraryDTO>>(response, HttpStatus.OK);
     }
 
+    @GetMapping("/itineraries/{zoneId}")
+    public ResponseEntity<List<ItineraryResponse>> fetchItin(
+            @PathVariable("zoneId") String zoneId) {
+        log.info("ZoneController  {} findItinerary start ");
+        List<ItineraryResponse> response= zoneService.findItinerariesForAZone(zoneId);
+        log.info("ZoneController  {} findItinerary end ");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
 }

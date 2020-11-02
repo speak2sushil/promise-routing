@@ -8,6 +8,7 @@ import java.util.List;
 
 @Value
 @Builder
+@JsonDeserialize(builder = ServiceOperation.ServiceOperationBuilder.class)
 public class ServiceOperation {
     List<String> dayOfWeek;
     boolean enabled;

@@ -15,16 +15,10 @@ import java.util.List;
 
 public class ServiceRestrictionsConverter implements AttributeConverter<ServiceRestrictions, String> {
 
-    ObjectMapper objectMapper = new ObjectMapper();
-
     @Override
     public String toGraphProperty(ServiceRestrictions serviceRestrictions) {
         if (null != serviceRestrictions) {
-            try {
-                return objectMapper.writeValueAsString(serviceRestrictions);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("serialization failed");
-            }
+            return new Gson().toJson(serviceRestrictions);
         }
         return null;
     }
@@ -32,13 +26,9 @@ public class ServiceRestrictionsConverter implements AttributeConverter<ServiceR
     @Override
     public ServiceRestrictions toEntityAttribute(String jsonString) {
         if (StringUtils.isNoneEmpty(jsonString)) {
-            try {
-                objectMapper.readValue(jsonString, ServiceRestrictions.class);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("deserialization failed");
-            }
+            Gson gson = new Gson();
+            return gson.fromJson(jsonString, ServiceRestrictions.class);
         }
         return null;
-
     }
 }
