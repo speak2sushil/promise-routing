@@ -45,16 +45,20 @@ public class DataWarmer {
         List<Node> stores = new ArrayList<>();
         List<Node> crossDockHubs = new ArrayList<>();
         List<Node> zones = new ArrayList<>();
-        prepareNodes(fcs, 50, 0);
-        prepareNodes(stores, 50, 1);
-        prepareNodes(crossDockHubs, 15, 2);
-        prepareNodes(zones, 50, 3);
-        connectNodes(fcs, 20);
-        connectNodes(stores, 20);
-        connectNodes(crossDockHubs, 10);
-        preparePaths(fcs, stores, crossDockHubs, zones, 3, 20);
-        preparePaths(fcs, stores, crossDockHubs, zones, 4, 20);
-        preparePaths(fcs, stores, crossDockHubs, zones, 5, 20);
+        //Node preparation
+        prepareNodes(fcs, 125, 0);
+        prepareNodes(stores, 125, 1);
+        prepareNodes(crossDockHubs,40 , 2);
+        prepareNodes(zones, 500, 3);
+        //conencting to same nodes
+        connectNodes(fcs, 100);
+        connectNodes(stores, 100);
+        connectNodes(crossDockHubs, 50);
+        //building paths with zones
+        preparePaths(fcs, stores, crossDockHubs, zones, 2, 500);
+        preparePaths(fcs, stores, crossDockHubs, zones, 3, 150);
+        preparePaths(fcs, stores, crossDockHubs, zones, 4, 100);
+        preparePaths(fcs, stores, crossDockHubs, zones, 5, 50);
     }
 
     void connectNodes(List<Node> nodes, int count) {

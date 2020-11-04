@@ -88,7 +88,9 @@ public class ZoneServiceImpl implements ZoneService {
 
     @Override
     public List<ItineraryResponse> findItinerariesForAZone(List<Long> zoneIds) {
+        long start = System.currentTimeMillis();
         Result allPathsForAZone = nodeRepository.findAllFacilitiesForZonesBasedOnService(zoneIds);
+        log.info("Time Take in Query*****{}", System.currentTimeMillis() - start);
         List<ItineraryResponse> itineraryResponses = new ArrayList<>();
         allPathsForAZone.iterator().forEachRemaining(stringObjectMap -> {
             List<Leg> relationships = (List<Leg>) stringObjectMap.get("relationships");
@@ -159,6 +161,7 @@ public class ZoneServiceImpl implements ZoneService {
                         .build());
             }
         });
+        log.info("Time Take in evaluation*****{}", System.currentTimeMillis() - start);
         return itineraryResponses;
     }
 
