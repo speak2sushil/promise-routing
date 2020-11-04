@@ -41,7 +41,7 @@ public interface NodeRepository extends Neo4jRepository<Node, Long> {
             "ORDER BY sourceNode.ranking,noOfEdges ASC ")
     List<ItineraryResponse> findFacilitiesForZones(@Param("zoneIds") List<Long> zoneIds);
 
-    @Query("match p=(s:Service)<-[:`HAS-SERVICE`]-(n:Node)-[*..10]->(z:Node) " +
+    /*@Query("match p=(s:Service)<-[:`HAS-SERVICE`]-(n:Node)-[*..10]->(z:Node) " +
             "where s.name in $serviceList \n" +
             "and id(z) in $zoneIds \n" +
             "with collect(distinct n) as sourceNodes,collect(distinct z) as destinationNodes\n" +
@@ -52,7 +52,7 @@ public interface NodeRepository extends Neo4jRepository<Node, Long> {
             "and  start.type IN ['FULFILMENT_CENTER','STORE']\n" +
             "return nodes(path) AS nodes, relationships(path) as relationships\n" +
             "ORDER BY weight ")
-    Result findAllFacilitiesForZonesBasedOnService(@Param("serviceList") List<String> serviceList ,@Param("zoneIds") List<Long> zoneIds );
+    Result findAllFacilitiesForZonesBasedOnService(@Param("serviceList") List<String> serviceList ,@Param("zoneIds") List<Long> zoneIds );*/
 
     @Query("match p=(s:Service)<-[:`HAS-SERVICE`]-(n:Node)-[*..10]->(z:Node) where  z.name in [$zone]\n" +
             "with collect(distinct n) as sourceNodes,collect(distinct z) as destinationNodes\n" +
@@ -64,4 +64,21 @@ public interface NodeRepository extends Neo4jRepository<Node, Long> {
             "return nodes(path) AS nodes, relationships(path) as relationships\n" +
             "ORDER BY weight")
     Result findAllPathsForAZone(String zone);
+
+    @Query("match p=(s:Service)<-[:`HAS-SERVICE`]-(n:Node)-[:LEG*..10]->(z:Node)  where\n" +
+            "id(z) in $zonedIds \n" +
+            "with collect(distinct n) as sourceNodes,collect(distinct z) as destinationNodes\n" +
+            "with sourceNodes+destinationNodes as allNodes,sourceNodes\n" +
+            "match (start:Node),(end:Node:ZONE)\n" +
+            "CALL apoc.algo.dijkstra(start, end, 'LEG>', 'cost') YIELD path, weight\n" +
+            "where all(node in nodes(path) where node in allNodes)\n" +
+            "and  start.type IN ['FULFILMENT_CENTER','STORE']\n" +
+            "with  nodes(path) AS nodes, relationships(path) as relationships\n" +
+            ",sourceNodes\n" +
+            "UNWIND sourceNodes as node\n" +
+            "OPTIONAL match (s:Service)<-[:`HAS-SERVICE`]-(node)\n" +
+            "return nodes,relationships\n" +
+            ",COLLECT({node: id(node), services: s}) AS nodeServices")
+    Result findAllFacilitiesForZonesBasedOnService(List<Long> zonedIds);
+
 }

@@ -6,7 +6,6 @@ import lombok.Value;
 
 @Value
 @Builder
-@JsonDeserialize(builder = LegRestrictions.LegRestrictionsBuilder.class)
 public class LegRestrictions {
     Double maxWeightInKg;
     Double maxVolumeInDm3;

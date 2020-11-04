@@ -8,7 +8,6 @@ import java.util.List;
 
 @Value
 @Builder
-@JsonDeserialize(builder = ServiceRestrictions.ServiceRestrictionsBuilder.class)
 public class ServiceRestrictions {
     List<String> productTypes;
     double maxWeight;

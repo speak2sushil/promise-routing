@@ -8,17 +8,23 @@ import com.falabella.logistic.network.model.ItineraryResponse;
 import com.falabella.logistic.network.model.Leg;
 import com.falabella.logistic.network.model.LegRestrictions;
 import com.falabella.logistic.network.model.Node;
+import com.falabella.logistic.network.model.NodeType;
 import com.falabella.logistic.network.model.Service;
 import com.falabella.logistic.network.model.ServiceCategory;
 import com.falabella.logistic.network.model.ServiceRestrictions;
+import com.falabella.logistic.network.model.ServiceType;
 import com.falabella.logistic.network.repository.NodeRepository;
 import com.falabella.logistic.network.repository.ServiceRepository;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.neo4j.driver.internal.InternalNode;
 import org.neo4j.ogm.model.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 @org.springframework.stereotype.Service
 @Slf4j
@@ -80,30 +87,41 @@ public class ZoneServiceImpl implements ZoneService {
     }
 
     @Override
-    public List<ItineraryResponse> findItinerariesForAZone(String zoneId) {
-        Result allPathsForAZone = nodeRepository.findAllPathsForAZone(zoneId);
+    public List<ItineraryResponse> findItinerariesForAZone(List<Long> zoneIds) {
+        Result allPathsForAZone = nodeRepository.findAllFacilitiesForZonesBasedOnService(zoneIds);
         List<ItineraryResponse> itineraryResponses = new ArrayList<>();
         allPathsForAZone.iterator().forEachRemaining(stringObjectMap -> {
             List<Leg> relationships = (List<Leg>) stringObjectMap.get("relationships");
             List<Node> nodes = (List<Node>) stringObjectMap.get("nodes");
+            Map<String, Object>[] nodeServices = (Map<String, Object>[]) stringObjectMap.get("nodeServices");
+
+            Map<Long, List<Service>> nodeServiceMap = preapreNodeServiceMap(nodeServices);
             List<ServiceCategory> legsServiceCategories = allowedLegsServiceCategories(relationships);
             boolean skip = legsServiceCategories.isEmpty();
-
 
             double allowedWeight = relationships.stream().map(Leg::getLegRestrictions).mapToDouble(LegRestrictions::getMaxWeightInKg).min().orElseThrow(RuntimeException::new);
             double allowedVolume = relationships.stream().map(Leg::getLegRestrictions).mapToDouble(LegRestrictions::getMaxVolumeInDm3).min().orElseThrow(RuntimeException::new);
             double allowedDimensions = relationships.stream().map(Leg::getLegRestrictions).mapToDouble(LegRestrictions::getMaxDimensionInCm).min().orElseThrow(RuntimeException::new);
 
-            Set<String> excludedProductTypes = new HashSet<>();
+            Set<String> excludedProductTypes = new HashSet<>(relationships.stream().map(Leg::getExcludedProductTypes).flatMap(Collection::stream).collect(Collectors.toSet()));
+            List<List<String>> serviceTypes = new ArrayList<>();
             if (!skip) {
                 for (Node node : nodes) {
-                    List<Service> servicesByNodeId = nodeRepository.findServicesByNodeId(node.getNodeId());
-                    List<Service> filteredNodeServices = servicesByNodeId.stream().filter(service -> legsServiceCategories.contains(service.getServiceCategory())).collect(toList());
-                    if (filteredNodeServices.isEmpty()) {
+                    if(node.getType() == NodeType.ZONE)
+                        continue;
+                    List<Service> servicesByNodeId = nodeServiceMap.get(node.getNodeId());
+                    List<Service> filteredNodeServices = null;
+                    if(servicesByNodeId != null) {
+                         filteredNodeServices = servicesByNodeId.stream().filter(service -> legsServiceCategories.contains(service.getServiceCategory())).collect(toList());
+                         serviceTypes.add(filteredNodeServices.stream().map(Service::getName).collect(toList()));
+                    }
+                    if (filteredNodeServices == null || filteredNodeServices.isEmpty()) {
                         skip = true;
                     } else {
                         ServiceRestrictions serviceRestrictions = filteredNodeServices.get(0).getServiceRestrictions();
-                        excludedProductTypes.addAll(serviceRestrictions.getProductTypes());
+                        if(serviceRestrictions.getProductTypes() != null) {
+                            excludedProductTypes.addAll(serviceRestrictions.getProductTypes());
+                        }
                         if (allowedWeight > serviceRestrictions.getMaxWeight()) {
                             allowedWeight = serviceRestrictions.getMaxWeight();
                         }
@@ -114,6 +132,20 @@ public class ZoneServiceImpl implements ZoneService {
                     }
                 }
             }
+            Set<String> allowedServices = new HashSet<>();
+           if(!skip && serviceTypes.size() > 1) {
+               List<String> allowedServiceAtNode = serviceTypes.get(0);
+               for(int i = 1; i< serviceTypes.size(); i++) {
+                   serviceTypes.get(i).retainAll(allowedServiceAtNode);
+                   if(serviceTypes.get(i).size() ==0) {
+                       skip = true;
+                       break;
+                   }
+                   allowedServices.addAll(serviceTypes.get(i));
+               }
+           } else if(!skip){
+               allowedServices.addAll(serviceTypes.get(0));
+           }
             if (!skip) {
                 itineraryResponses.add(ItineraryResponse.builder()
                         .nodes(nodes)
@@ -122,6 +154,7 @@ public class ZoneServiceImpl implements ZoneService {
                         .destinationNode(relationships.get(relationships.size() - 1).getTargetNode())
                         .noOfEdges(relationships.size())
                         .excludedProductTypes(excludedProductTypes)
+                        .serviceCategories(allowedServices)
                         .restrictions(ItineraryResponse.Restrictions.builder().maxWeightInKg(allowedWeight).maxVolumeInDm3(allowedVolume).maxDimensionInCm(allowedDimensions).build())
                         .build());
             }
@@ -129,9 +162,36 @@ public class ZoneServiceImpl implements ZoneService {
         return itineraryResponses;
     }
 
+    private Map<Long, List<Service>> preapreNodeServiceMap(Map<String, Object>[] nodeServices) {
+        Map<Long, List<Service>> nodeServiceMap = new HashMap<>();
+        for (Map<String, Object> nodeService : nodeServices) {
+            Long nodeId = (Long) nodeService.get("node");
+            InternalNode internalNodes = (InternalNode) nodeService.get("services");
+            Service service = Service.builder()
+                    .id(internalNodes.id())
+                    .offeredDaysAhead(internalNodes.get("offeredDaysAhead").asInt())
+                    .enabled(internalNodes.get("enabled").asBoolean())
+                    .serviceType(ServiceType.valueOf(internalNodes.get("serviceType").asString()))
+                    .name(internalNodes.get("name").asString())
+                    .serviceRestrictions(new Gson().fromJson(internalNodes.get("serviceRestrictions").asString(), ServiceRestrictions.class))
+                    .serviceCategory(ServiceCategory.valueOf(internalNodes.get("serviceCategory").asString()))
+                    .build();
+            if (nodeServiceMap.containsKey(nodeId)) {
+                List<Service> services = nodeServiceMap.get(nodeId);
+                services.add(service);
+                nodeServiceMap.put(nodeId, services);
+            } else {
+                ArrayList<Service> list = new ArrayList<>();
+                list.add(service);
+                nodeServiceMap.put(nodeId, list);
+            }
+        }
+        return nodeServiceMap;
+    }
+
     private List<ServiceCategory> allowedLegsServiceCategories(List<Leg> relationships) {
         List<ServiceCategory> allowed = new ArrayList<>();
-        List<Set<ServiceCategory>> collect = relationships.stream().map(Leg::getServiceCategory).collect(Collectors.toList());
+        List<Set<ServiceCategory>> collect = relationships.stream().map(Leg::getServiceCategory).collect(toList());
         Set<ServiceCategory> serviceCategories = collect.get(0);
         serviceCategories.forEach(serviceCategory -> {
             boolean add = true;
@@ -147,4 +207,6 @@ public class ZoneServiceImpl implements ZoneService {
         });
         return allowed;
     }
+
+
 }

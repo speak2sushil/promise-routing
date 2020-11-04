@@ -1,19 +1,27 @@
 package com.falabella.logistic.network.model;
 
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.neo4j.ogm.annotation.*;
+import lombok.NoArgsConstructor;
+import org.neo4j.ogm.annotation.GeneratedValue;
+import org.neo4j.ogm.annotation.Id;
+import org.neo4j.ogm.annotation.Labels;
+import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Property;
+import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
 import org.neo4j.ogm.annotation.typeconversion.EnumString;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @NodeEntity
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Node {
 
     @Id @GeneratedValue
@@ -23,7 +31,6 @@ public class Node {
 
     private String name;
     private String shortName;
-    //@Relationship(type="HAS_OPERATOR",direction = Relationship.OUTGOING)
     @Convert(OperatorConverter.class)
     @Property
     private Operator operator;
@@ -33,8 +40,5 @@ public class Node {
     private Integer ranking ;
     @Relationship(type = "HAS-SERVICE", direction = Relationship.OUTGOING)
     List<Service> services;
-   /* @JsonIgnoreProperties
-    @Relationship(type="LEG",direction = Relationship.UNDIRECTED)
-    private Set<Leg> legs;*/
 
 }

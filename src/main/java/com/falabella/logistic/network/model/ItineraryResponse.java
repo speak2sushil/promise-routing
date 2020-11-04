@@ -21,6 +21,7 @@ public class ItineraryResponse {
     List<Leg> rels;
     Set<String> excludedProductTypes;
     Restrictions restrictions;
+    Set<String> serviceCategories;
 
     @Value
     @Builder

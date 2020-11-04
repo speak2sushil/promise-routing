@@ -2,7 +2,10 @@ package com.falabella.logistic.network.model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.neo4j.ogm.annotation.*;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
 
@@ -12,6 +15,9 @@ import java.util.Set;
 
 @RelationshipEntity(type = "LEG")
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Leg {
 
     @Id

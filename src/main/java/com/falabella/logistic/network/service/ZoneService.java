@@ -9,5 +9,5 @@ public interface ZoneService {
 
     public List<ItineraryDTO>  findItinerary(List<Long> zoneIds);
 
-    List<ItineraryResponse> findItinerariesForAZone(String zoneId);
+    List<ItineraryResponse> findItinerariesForAZone(List<Long> zoneIds);
 }
