@@ -28,7 +28,9 @@ import java.util.stream.IntStream;
 @Component
 
 public class DataWarmer {
-
+    List<String> excludedProductTypes = List.of("FRAGILE_ITEMS", "LARGE_ITEMS", "SMALL_ITEMS", "CHEMICAL_PRODUCTS", "RDX", "CRACKERS", "LIQUID_ITEMS", "METAL_ITEMS", "POISON", "LIQUOR", "DRUGS");
+    List<ServiceCategory> serviceCategories = Arrays.asList(ServiceCategory.values());
+    List<ServiceType> serviceTypes = Arrays.asList(ServiceType.values());
     Random random = new Random();
     @Autowired
     LegRepository legRepository;
@@ -46,26 +48,66 @@ public class DataWarmer {
         List<Node> crossDockHubs = new ArrayList<>();
         List<Node> zones = new ArrayList<>();
         //Node preparation
-        prepareNodes(fcs, 125, 0);
-        prepareNodes(stores, 125, 1);
-        prepareNodes(crossDockHubs,40 , 2);
-        prepareNodes(zones, 500, 3);
-        //conencting to same nodes
-        connectNodes(fcs, 100);
-        connectNodes(stores, 100);
-        connectNodes(crossDockHubs, 50);
-        //building paths with zones
-        preparePaths(fcs, stores, crossDockHubs, zones, 2, 500);
-        preparePaths(fcs, stores, crossDockHubs, zones, 3, 150);
-        preparePaths(fcs, stores, crossDockHubs, zones, 4, 100);
-        preparePaths(fcs, stores, crossDockHubs, zones, 5, 50);
+        prepareNodes(fcs, 500, 0);
+        prepareNodes(stores, 500, 1);
+        prepareNodes(crossDockHubs, 100, 2);
+        prepareNodes(zones, 600, 3);
+
+        buildPaths(fcs, stores, crossDockHubs, zones);
+
+    }
+
+
+    void buildPaths(List<Node> fcs, List<Node> stores, List<Node> crossDockHubs, List<Node> zones) {
+        int fcsCounter = 0;
+        int storesCounter = 0;
+        int crossDocksCounter = 0;
+        for (Node destination : zones) {
+            if (fcsCounter == fcs.size())
+                fcsCounter = 0;
+            if (storesCounter == stores.size())
+                storesCounter = 0;
+            if (crossDocksCounter == crossDockHubs.size())
+                crossDocksCounter = 0;
+            Node source = random.nextInt(10) >= 5 ? fcs.get(fcsCounter++) : stores.get(storesCounter++);
+            if(random.nextInt(10) < 2 ) {
+                Node intermediate = random.nextInt(10) >= 5 ? fcs.get(fcsCounter++) : stores.get(storesCounter++);
+                legRepository.save(prepareLinks(source, intermediate));
+                source = intermediate;
+            }
+            if (random.nextInt(10) >= 5) {
+                Node intermediate = crossDockHubs.get(crossDocksCounter++);
+                legRepository.save(prepareLinks(source, intermediate));
+                source = intermediate;
+            }
+            legRepository.save(prepareLinks(source, destination));
+        }
+        if(fcsCounter < fcs.size()) {
+            prepareRemainingSourcePaths(fcs, crossDockHubs,zones, fcsCounter);
+        }
+        if(storesCounter < stores.size()) {
+            prepareRemainingSourcePaths(stores,crossDockHubs, zones, storesCounter);
+        }
+    }
+
+    private void prepareRemainingSourcePaths(List<Node> fcs, List<Node> crossDockHubs, List<Node> zones, int fcsCounter) {
+        for(int i = fcsCounter; i< fcs.size(); i++) {
+            Node source = fcs.get(fcsCounter);
+            if (random.nextInt(10) >= 5) {
+                Node intermediate = crossDockHubs.get(random.nextInt(crossDockHubs.size()));
+                legRepository.save(prepareLinks(source, intermediate));
+                source = intermediate;
+            }
+            Node destination = zones.get(random.nextInt(zones.size()));
+            legRepository.save(prepareLinks(source, destination));
+        }
     }
 
     void connectNodes(List<Node> nodes, int count) {
-        for(int i = 0; i< count;) {
+        for (int i = 0; i < count; ) {
             Node source = nodes.get(random.nextInt(nodes.size()));
             Node destination = nodes.get(random.nextInt(nodes.size()));
-            if(!source.getNodeId().equals(destination.getNodeId())) {
+            if (!source.getNodeId().equals(destination.getNodeId())) {
                 legRepository.save(prepareLinks(source, destination));
                 i++;
             }
@@ -88,7 +130,7 @@ public class DataWarmer {
                     int x = random.nextInt(10);
                     if (x <= 3) {
                         intemediate = crossDockHubs.get(random.nextInt(crossDockHubs.size()));
-                    } else if (x < 7)  {
+                    } else if (x < 7) {
                         intemediate = fcs.get(random.nextInt(fcs.size()));
                     } else {
                         intemediate = stores.get(random.nextInt(stores.size()));
@@ -123,10 +165,6 @@ public class DataWarmer {
             list.add(node);
         });
     }
-
-    List<String> excludedProductTypes = List.of("FRAGILE_ITEMS", "LARGE_ITEMS", "SMALL_ITEMS", "CHEMICAL_PRODUCTS", "RDX", "CRACKERS", "LIQUID_ITEMS", "METAL_ITEMS", "POISON", "LIQUOR", "DRUGS");
-    List<ServiceCategory> serviceCategories = Arrays.asList(ServiceCategory.values());
-    List<ServiceType> serviceTypes = Arrays.asList(ServiceType.values());
 
 
     private Leg prepareLinks(Node startNode, Node endNode) {

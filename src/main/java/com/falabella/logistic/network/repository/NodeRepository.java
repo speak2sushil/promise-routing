@@ -65,7 +65,7 @@ public interface NodeRepository extends Neo4jRepository<Node, Long> {
             "ORDER BY weight")
     Result findAllPathsForAZone(String zone);
 
-    @Query("match p=(s:Service)<-[:`HAS-SERVICE`]-(n:Node)-[:LEG*..10]->(z:Node)  where\n" +
+    @Query("match p=(s:Service)<-[:`HAS-SERVICE`]-(n:Node)-[:LEG*..5]->(z:Node)  where\n" +
             "id(z) in $zonedIds \n" +
             "with collect(distinct n) as sourceNodes,collect(distinct z) as destinationNodes\n" +
             "with sourceNodes+destinationNodes as allNodes,sourceNodes\n" +
